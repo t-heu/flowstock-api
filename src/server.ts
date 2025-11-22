@@ -1,51 +1,27 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import express from "express";
-import cors from "cors";
 import { createServer } from "http";
-import { WebSocketServer } from "ws";
+import app from "./app";
+import { setupStatusWS } from "./modules/status/status.ws";
 
-import mainRoutes from "./routes";
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use("/api", mainRoutes);
-
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3333;
 
 // HTTP server
 const server = createServer(app);
 
-// WS server
-const wss = new WebSocketServer({ server, path: "/ws/status" });
-
-// Conjunto de clientes conectados
-const clients: Set<any> = new Set();
-
-wss.on("connection", (ws) => {
-  clients.add(ws);
-  console.log("Cliente WS conectado");
-
-  // envia status inicial
-  ws.send(JSON.stringify({ status: "online" }));
-
-  ws.on("close", () => clients.delete(ws));
+// Inicia servidor
+server.listen(PORT, () => {
+  console.log(`🔥 API rodando na porta ${PORT}`)
+  // Inicializa WebSocket do módulo status
+  setupStatusWS(server);
 });
 
-// Função para enviar status apenas quando ele muda
-let currentStatus: "online" | "offline" | "instavel" = "online";
+// Captura erros globais para não derrubar o servidor
+process.on("uncaughtException", (err) => {
+  console.error("Erro não tratado (uncaughtException):", err);
+});
 
-export function updateStatus(newStatus: typeof currentStatus) {
-  if (currentStatus === newStatus) return; // não envia se não mudou
-  currentStatus = newStatus;
-
-  for (const client of clients) {
-    if (client.readyState === 1) {
-      client.send(JSON.stringify({ status: currentStatus }));
-    }
-  }
-}
-
-server.listen(PORT, () => console.log(`🔥 API rodando na porta ${PORT}`));
+process.on("unhandledRejection", (reason) => {
+  console.error("Rejeição de promessa não tratada:", reason);
+});

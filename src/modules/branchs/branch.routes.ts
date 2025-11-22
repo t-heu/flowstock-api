@@ -1,0 +1,15 @@
+import { Router } from "express";
+
+import {branchController} from "./branch.controller";
+
+import { authenticate } from "../../middlewares/authenticate";
+import { allowRoles } from "../../middlewares/permission";
+
+const router = Router();
+
+router.get("/", authenticate, allowRoles("admin", "manager", "operator"), branchController.getAllBranch);
+router.post("/", authenticate, allowRoles("admin", "manager"), branchController.createBranch);
+router.put("/:id", authenticate, allowRoles("admin", "manager"), branchController.updateBranch);
+router.delete("/:id", authenticate, allowRoles("admin", "manager"), branchController.deleteBranch);
+
+export default router;
