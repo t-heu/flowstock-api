@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
+import logger from "../logger";
+
 // Middleware global de tratamento de erros
 export function errorHandler(
   err: any,
@@ -7,7 +9,7 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
-  console.error("Erro no servidor:", err);
+  logger.warn("Erro no servidor:", err);
 
   // Retorna erro padronizado para o front
   res.status(500).json({
