@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon",
-    "postinstall": "prisma generate",
+    "prebuild": "prisma generate",
     "build": "tsup src/server.ts --format esm --out-dir dist --clean",
     "start": "node dist/server.js"
   },
