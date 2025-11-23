@@ -20,7 +20,7 @@ const limiter = rateLimit({
   }
 });
 
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 app.use(helmet());                 // Headers de segurança
 app.use(limiter);       // Limite de requisições
 app.use(cors());
