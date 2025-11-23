@@ -8,6 +8,7 @@ import userRoutes from "./modules/users/user.routes";
 import reportRoutes from "./modules/reports/report.routes";
 import statsRoutes from "./modules/stats/stats.routes";
 import productRoutes from "./modules/products/products.routes";
+import healthRoutes from "./modules/health/health.routes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/users", userRoutes);
 router.use("/products", productRoutes);
 router.use("/report", reportRoutes);
 router.use("/stats", statsRoutes);
+router.use("/health", healthRoutes);
 
 export default router;

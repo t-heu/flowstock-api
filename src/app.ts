@@ -15,6 +15,14 @@ app.use(compression());
 // Rotas
 app.use("/api", mainRoutes);
 
+// Rota 404
+app.use((req, res, next) => {
+  res.status(404).json({
+    status: "error",
+    message: "404 Not Found",
+  });
+});
+
 // Middleware global de erros (deve vir depois das rotas)
 app.use(errorHandler);
 
