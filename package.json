@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsup src/server.ts --format esm --out-dir dist --clean",
-    "start": "node dist/server.js"
+    "start": "npx prisma generate && node dist/server.js"
   },
   "keywords": [],
   "author": "",
