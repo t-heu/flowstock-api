@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3333;
 const server = createServer(app);
 
 // Inicia servidor
-server.listen(PORT, () => {
+server.listen(Number(PORT), "0.0.0.0", 0, () => {
   console.log(`🔥 API rodando na porta ${PORT}`)
   // Inicializa WebSocket do módulo status
   setupStatusWS(server);
