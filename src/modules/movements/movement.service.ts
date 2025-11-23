@@ -1,120 +1,134 @@
 import { v4 as uuidv4 } from "uuid";
+import { prisma } from "../../lib/prisma";
 
-import { supabase } from "../../config/supabase";
 import { fetchMovementsBase } from "./movementBase";
 
-export const getMovements = async (user: any, typeFilter?: any) => {
-  try {
-    const movements = await fetchMovementsBase({
-      type: typeFilter,
-      department: user.role !== "admin" ? user.department : undefined,
-    });
+export const movementService = {
+  async getMovements(user: any, typeFilter: "entrada" | "saida") {
+    try {
+      const movements = await fetchMovementsBase({
+        type: typeFilter,
+        department: user.role !== "admin" ? user.department : undefined,
+      });
 
-    return { success: true, data: movements };
-  } catch (err: any) {
-    return { success: false, error: err.message };
-  }
-};
-
-export const createMovement = async (movement: {
-  branch_id: string;
-  destination_branch_id?: string;
-  product_id: string;
-  quantity: number;
-  type: "entrada" | "saida";
-  notes?: string;
-  invoice_number?: string;
-}) => {
-  try {
-    const { data: product } = await supabase
-      .from("products")
-      .select("*")
-      .eq("id", movement.product_id)
-      .single();
-    if (!product) return { success: false, error: "Produto não encontrado" };
-
-    const movementToAdd = {
-      ...movement,
-      id: uuidv4(),
-      created_at: new Date().toISOString(),
-      product_department: product.department,
-    };
-
-    const { data: stockRows } = await supabase
-      .from("stock")
-      .select("*")
-      .eq("product_id", movement.product_id)
-      .eq("branch_id", movement.branch_id)
-      .maybeSingle();
-
-    const currentQty = stockRows ? Number(stockRows.quantity) : null;
-
-    if (movement.type === "saida") {
-      if (currentQty === null || currentQty < movement.quantity) {
-        return { success: false, error: `Estoque insuficiente (${currentQty ?? 0})` };
-      }
+      return { success: true, data: movements };
+    } catch (err: any) {
+      return { success: false, error: err.message };
     }
+  },
 
-    if (currentQty !== null) {
-      const newQty =
-        movement.type === "entrada"
-          ? currentQty + movement.quantity
-          : currentQty - movement.quantity;
+  async createMovement(movement: {
+    branch_id: string;
+    destination_branch_id?: string;
+    product_id: string;
+    quantity: number;
+    type: "entrada" | "saida";
+    notes?: string;
+    invoice_number?: string;
+  }) {
+    try {
+      const product = await prisma.products.findUnique({
+        where: { id: movement.product_id },
+      });
+      if (!product) return { success: false, error: "Produto não encontrado" };
 
-      const { error: updateErr } = await supabase
-        .from("stock")
-        .update({
-          quantity: Math.max(0, newQty),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("product_id", movement.product_id)
-        .eq("branch_id", movement.branch_id);
-      if (updateErr) throw updateErr;
-    } else {
+      // Busca estoque da filial
+      const stockRow = await prisma.stock.findFirst({
+        where: {
+          product_id: movement.product_id,
+          branch_id: movement.branch_id,
+        },
+      });
+
+      const currentQty = stockRow?.quantity ?? null;
+
       if (movement.type === "saida") {
+        if (currentQty === null || currentQty < movement.quantity) {
+          return { success: false, error: `Estoque insuficiente (${currentQty ?? 0})` };
+        }
+      }
+
+      // Atualiza ou cria estoque
+      if (currentQty !== null) {
+        await prisma.stock.updateMany({
+          where: {
+            product_id: movement.product_id,
+            branch_id: movement.branch_id,
+          },
+          data: {
+            quantity:
+              movement.type === "entrada"
+                ? currentQty + movement.quantity
+                : currentQty - movement.quantity,
+            updated_at: new Date(),
+          },
+        });
+      } else if (movement.type === "entrada") {
+        await prisma.stock.create({
+          data: {
+            product_id: movement.product_id,
+            branch_id: movement.branch_id,
+            quantity: movement.quantity,
+            updated_at: new Date(),
+          },
+        });
+      } else {
         return { success: false, error: "Filial sem estoque desse produto" };
       }
 
-      const { error: insertErr } = await supabase.from("stock").insert([
-        {
-          product_id: movement.product_id,
-          branch_id: movement.branch_id,
-          quantity: movement.quantity,
-          updated_at: new Date().toISOString(),
+      // Transferência entre filiais
+      if (movement.type === "saida" && movement.destination_branch_id) {
+        const destStock = await prisma.stock.findFirst({
+          where: {
+            product_id: movement.product_id,
+            branch_id: movement.destination_branch_id,
+          },
+        });
+
+        if (destStock) {
+          await prisma.stock.updateMany({
+            where: {
+              product_id: movement.product_id,
+              branch_id: movement.destination_branch_id,
+            },
+            data: {
+              quantity: destStock.quantity + movement.quantity,
+              updated_at: new Date(),
+            },
+          });
+        } else {
+          await prisma.stock.create({
+            data: {
+              product_id: movement.product_id,
+              branch_id: movement.destination_branch_id,
+              quantity: movement.quantity,
+              updated_at: new Date(),
+            },
+          });
+        }
+      }
+
+      const inserted = await prisma.movements.create({
+        data: {
+          ...movement,
+          id: uuidv4(),
+          product_department: product.department,
+          created_at: new Date(),
         },
-      ]);
-      if (insertErr) throw insertErr;
-    }
-
-    if (movement.type === "saida" && movement.destination_branch_id) {
-      await supabase.rpc("adjust_stock_transfer", {
-        p_product_id: movement.product_id,
-        p_from_branch: movement.branch_id,
-        p_to_branch: movement.destination_branch_id,
-        p_qty: movement.quantity,
       });
+
+      return { success: true, data: inserted };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Erro ao criar movimento" };
     }
+  },
 
-    const { data: inserted, error } = await supabase
-      .from("movements")
-      .insert([movementToAdd])
-      .select()
-      .single();
-    if (error) throw error;
-
-    return { success: true, data: inserted };
-  } catch (err: any) {
-    return { success: false, error: err.message };
-  }
-};
-
-export const deleteMovement = async (id: string) => {
-  try {
-    const { error } = await supabase.from("movements").delete().eq("id", id);
-    if (error) throw error;
-
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
-  }
+  async deleteMovement(id: string) {
+    try {
+      await prisma.movements.delete({ where: { id } });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Erro ao deletar movimento" };
+    }
+  },
 };

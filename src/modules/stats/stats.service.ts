@@ -1,70 +1,68 @@
-import { supabase } from "../../config/supabase";
+import { prisma } from '../../lib/prisma';
 
 export const statsService = {
   async getStats(user: any, branchFilter?: string) {
     const dept = user.role !== "admin" ? user.department : undefined;
     const branch = branchFilter && branchFilter !== "ALL" ? branchFilter : undefined;
 
-    // PRODUCTS COUNT
-    let queryProducts = supabase
-      .from("products")
-      .select("*", { count: "exact", head: true });
+    const [
+      totalProducts,
+      totalBranches,
+      totalEntries,
+      totalExits,
+      stockAggregate,
+    ] = await prisma.$transaction([
+      // totalProducts
+      prisma.products.count({
+        where: dept ? { department: dept } : undefined,
+      }),
 
-    if (dept) queryProducts = queryProducts.eq("department", dept);
+      // totalBranches
+      prisma.branches.count(),
 
-    const { count: prodCount } = await queryProducts;
+      // totalEntries
+      prisma.movements.count({
+        where: {
+          type: "entrada",
+          ...(dept ? { product_department: dept } : {}),
+          ...(branch ? { branch_id: branch } : {}),
+        },
+      }),
 
-    // BRANCHES COUNT
-    const { count: branchCount } = await supabase
-      .from("branches")
-      .select("*", { count: "exact", head: true });
+      // totalExits
+      prisma.movements.count({
+        where: {
+          type: "saida",
+          ...(dept ? { product_department: dept } : {}),
+          ...(branch ? { branch_id: branch } : {}),
+        },
+      }),
 
-    // ENTRIES COUNT
-    const { count: entriesCount } = await supabase
-      .from("movements")
-      .select("*", { count: "exact", head: true })
-      .eq("type", "entrada")
-      .match({
-        ...(dept ? { product_department: dept } : {}),
-        ...(branch ? { branch_id: branch } : {}),
-      });
+      // totalStock
+      prisma.stock.aggregate({
+        _sum: { quantity: true },
+        where: {
+          ...(branch ? { branch_id: branch } : {}),
+          ...(dept
+            ? {
+                products: {
+                  department: dept,
+                },
+              }
+            : {}),
+        },
+      }),
+    ]);
 
-    // EXITS COUNT
-    const { count: exitsCount } = await supabase
-      .from("movements")
-      .select("*", { count: "exact", head: true })
-      .eq("type", "saida")
-      .match({
-        ...(dept ? { product_department: dept } : {}),
-        ...(branch ? { branch_id: branch } : {}),
-      });
-
-    // TOTAL STOCK
-    let query = supabase
-      .from("stock")
-      .select(`
-        quantity,
-        branch_id,
-        products!inner (department)
-      `);
-
-    if (branch) query = query.eq("branch_id", branch);
-    if (dept) query = query.eq("products.department", dept);
-
-    const { data } = await query;
-
-    const totalStock = (data ?? []).reduce(
-      (sum, row: any) => sum + Number(row.quantity),
-      0
-    );
+    const totalStock = stockAggregate._sum.quantity ?? 0;
 
     return {
       success: true,
       data: {
-        totalProducts: prodCount ?? 0,
-        totalBranches: branchCount ?? 0,
-        totalEntries: entriesCount ?? 0,
-        totalExits: exitsCount ?? 0,
+        totalProducts,
+        totalBranches,
+        totalEntries,
+        totalExits,
         totalStock,
       },
     };

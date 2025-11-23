@@ -1,22 +1,17 @@
-import { supabase } from "../../config/supabase";
+import { prisma } from "../../lib/prisma";
 import { BranchStockItem } from "../../shared/types";
 
 export const stockService = {
   async getStockAll(): Promise<{ success: boolean; data?: BranchStockItem[]; error?: string }> {
     try {
-      const { data, error } = await supabase
-        .from("stock")
-        .select(`
-          branch_id,
-          product_id,
-          quantity,
-          branches!inner(name),
-          products!inner(name, description)
-        `);
+      const data = await prisma.stock.findMany({
+        include: {
+          branches: { select: { name: true } },
+          products: { select: { name: true, description: true } },
+        },
+      });
 
-      if (error) throw error;
-
-      const normalized: BranchStockItem[] = (data || []).map((raw: any) => ({
+      const normalized: BranchStockItem[] = data.map((raw) => ({
         branch_id: raw.branch_id,
         branch_name: raw.branches?.name ?? "Desconhecida",
         product_id: raw.product_id,
@@ -29,5 +24,5 @@ export const stockService = {
     } catch (err: any) {
       return { success: false, error: err?.message || "Erro ao carregar estoque por filial" };
     }
-  }
+  },
 };

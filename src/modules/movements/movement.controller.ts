@@ -1,14 +1,19 @@
 import { Request, Response } from "express";
 
-import * as movementService from "./movement.service";
+import {movementService} from "./movement.service";
 
 export const movementController = {
   async getAllMovement(req: Request, res: Response) {
     try {
-      const type = req.query.type;
       const user = req.user;
-  
-      const result = await movementService.getMovements(user, type);
+      const typeQuery = req.query.type;
+
+      // Verifica se o typeQuery é válido
+      if (typeQuery !== "entrada" && typeQuery !== "saida") {
+        return res.status(400).json({ success: false, message: "Tipo inválido" });
+      }
+
+      const result = await movementService.getMovements(user, typeQuery); // agora é só "entrada" | "saida"
       return res.status(result.success ? 200 : 400).json(result);
     } catch (err) {
       console.error("Erro interno:", err);

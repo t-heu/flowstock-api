@@ -1,4 +1,4 @@
-import { supabase } from "../../config/supabase";
+import { prisma } from "../../lib/prisma";
 
 export const fetchMovementsBase = async (filters?: {
   limit?: number;
@@ -9,58 +9,41 @@ export const fetchMovementsBase = async (filters?: {
   endDate?: string;
   department?: string;
 }) => {
-  const {
-    limit = 30,
-    page = 1,
-    type,
-    branchId,
-    startDate,
-    endDate,
-    department,
-  } = filters || {};
+  const { limit = 30, page = 1, type, branchId, startDate, endDate, department } = filters || {};
+  const skip = (page - 1) * limit;
 
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
+  const where: any = {};
+  if (type) where.type = type;
+  if (branchId) where.branch_id = branchId;
+  if (startDate) where.created_at = { gte: new Date(startDate + "T00:00:00") };
+  if (endDate) where.created_at = { ...where.created_at, lte: new Date(endDate + "T23:59:59") };
+  if (department) where.products = { department };
 
-  let query = supabase
-    .from("movements")
-    .select(`
-      id,
-      quantity,
-      type,
-      notes,
-      created_at,
-      invoice_number,
-      product:product_id (id, code, name, department),
-      branch:branch_id (id, code, name),
-      destination_branch:destination_branch_id (id, code, name)
-    `)
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  const movements = await prisma.movements.findMany({
+    where,
+    include: {
+      products: { select: { id: true, code: true, name: true, department: true } },
+      branches_movements_branch_idTobranches: { select: { id: true, code: true, name: true } },
+      branches_movements_destination_branch_idTobranches: { select: { id: true, code: true, name: true } },
+    },
+    orderBy: { created_at: "desc" },
+    skip,
+    take: limit,
+  });
 
-  if (type) query = query.eq("type", type);
-  if (branchId) query = query.eq("branch_id", branchId);
-  if (startDate) query = query.gte("created_at", startDate + "T00:00:00");
-  if (endDate) query = query.lte("created_at", endDate + "T23:59:59");
-
-  const { data, error } = await query;
-  if (error) throw error;
-
-  return (data || [])
-    .filter((m: any) => !department || m.product?.department === department)
-    .map((m: any) => ({
-      id: m.id,
-      created_at: m.created_at,
-      invoice_number: m.invoice_number ?? "-",
-      branch_name: m.branch?.name ?? "-",
-      branch_code: m.branch?.code ?? "-",
-      destination_branch_name: m.destination_branch?.name ?? "-",
-      destination_branch_code: m.destination_branch?.code ?? "-",
-      product_code: m.product?.code ?? "-",
-      product_name: m.product?.name ?? "-",
-      product_department: m.product?.department ?? "-",
-      quantity: Number(m.quantity ?? 0),
-      type: m.type,
-      notes: m.notes ?? "-",
-    }));
+  return movements.map((m: any) => ({
+    id: m.id,
+    created_at: m.created_at,
+    invoice_number: m.invoice_number ?? "-",
+    branch_name: m.branches_movements_branch_idTobranches?.name ?? "-",
+    branch_code: m.branches_movements_branch_idTobranches?.code ?? "-",
+    destination_branch_name: m.branches_movements_destination_branch_idTobranches?.name ?? "-",
+    destination_branch_code: m.branches_movements_destination_branch_idTobranches?.code ?? "-",
+    product_code: m.products?.code ?? "-",
+    product_name: m.products?.name ?? "-",
+    product_department: m.products?.department ?? "-",
+    quantity: m.quantity,
+    type: m.type,
+    notes: m.notes ?? "-",
+  }));
 };

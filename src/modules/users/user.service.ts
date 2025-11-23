@@ -1,77 +1,87 @@
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-
-import { supabase } from "../../config/supabase";
+import { prisma } from "../../lib/prisma";
 
 export const userService = {
   async getAllUser() {
-    const { data, error } = await supabase
-      .from("users")
-      .select(`
-        *,
-        branch:branches(id, name)  -- o "branch" é o alias
-      `);
+    try {
+      const data = await prisma.users.findMany({
+        include: {
+          branches: { select: { id: true, name: true } }, // inclui a filial associada
+        },
+      });
 
-    if (error) return { success: false, error: error.message };
+      const users = data.map((u) => ({
+        ...u,
+        password: undefined, // não expõe senha
+        created_at: u.created_at ?? new Date().toISOString(),
+        role: u.role ?? "operator",
+        department: u.department ?? null,
+        branch: u.branches ?? null,
+      }));
 
-    const users = data.map((u: any) => ({
-      ...u,
-      password: undefined,
-      created_at: u.created_at ?? new Date().toISOString(),
-      role: u.role ?? "operator",
-      department: u.department ?? null,
-      branch: u.branch ?? null, // inclui a filial associada
-    }));
-
-    return { success: true, data: users };
+      return { success: true, data: users };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Erro ao buscar usuários" };
+    }
   },
 
   async createUser(payload: any) {
-    const hashedPassword = await bcrypt.hash("123", 10);
+    try {
+      const hashedPassword = await bcrypt.hash("123", 10);
 
-    const newUser = {
-      id: uuidv4(),
-      name: payload.name,
-      username: payload.username,
-      email: payload.email,
-      role: payload.role ?? "operator",
-      department: payload.department ?? null,
-      password: hashedPassword,
-      branch_id: payload.branchId,
-    };
+      await prisma.users.create({
+        data: {
+          id: uuidv4(),
+          name: payload.name,
+          username: payload.username,
+          email: payload.email,
+          role: payload.role ?? "operator",
+          department: payload.department ?? null,
+          password: hashedPassword,
+          branch_id: payload.branchId,
+        },
+      });
 
-    const { error } = await supabase.from("users").insert([newUser]);
-    if (error) {
-      if (error.code === "23505") {
+      return { success: true };
+    } catch (err: any) {
+      if (err.code === "P2002") {
+        // unique constraint failed
         return { success: false, error: "Email ou username já cadastrado" };
       }
-      return { success: false, error: error.message };
+      return { success: false, error: err?.message || "Erro ao criar usuário" };
     }
-
-    return { success: true };
   },
 
   async updateUser(id: string, updates: any) {
-    if (updates.password) {
-      updates.password = await bcrypt.hash(updates.password, 10);
-    } else {
-      delete updates.password;
+    try {
+      if (updates.password) {
+        updates.password = await bcrypt.hash(updates.password, 10);
+      } else {
+        delete updates.password;
+      }
+
+      if (updates.department === "") updates.department = null;
+      if (updates.department === undefined) delete updates.department;
+      delete updates.branch;
+
+      await prisma.users.update({
+        where: { id },
+        data: updates,
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Erro ao atualizar usuário" };
     }
-
-    if (updates.department === "") updates.department = null;
-    if (updates.department === undefined) delete updates.department;
-
-    delete updates.branch;
-
-    const { error } = await supabase.from("users").update(updates).eq("id", id);
-    if (error) return { success: false, error: error.message };
-
-    return { success: true };
   },
 
   async deleteUser(id: string) {
-    const { error } = await supabase.from("users").delete().eq("id", id);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
+    try {
+      await prisma.users.delete({ where: { id } });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Erro ao deletar usuário" };
+    }
   },
 };

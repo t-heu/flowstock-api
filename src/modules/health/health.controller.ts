@@ -1,40 +1,36 @@
 import { Request, Response } from "express";
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { prisma } from "../../lib/prisma";
 
+// Só vai checar se a API responde (não usa chave secreta)
 export async function getHealth(req: Request, res: Response) {
   try {
-    // --- 2️⃣ Postgres Health via /rest-admin/v1/live ---
-    let dbStatus: "online" | "offline" = "offline";
+    // API Health → sempre online se o servidor responder
+    const apiStatus: "online" | "offline" = "online";
+
+    // Banco Health → teste simples, sem expor chave secreta
+    let databaseStatus: "online" | "offline" = "offline";
+
     try {
-      const liveRes = await fetch(`${SUPABASE_URL}/rest-admin/v1/live`, {
-        method: "HEAD",
-        headers: {
-          apikey: SUPABASE_SERVICE_ROLE_KEY,
-          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        },
-      });
-      dbStatus = liveRes.ok ? "online" : "offline";
+      // Aqui você pode testar apenas se consegue conectar com o Prisma
+      // ou rodar uma query simples sem precisar da chave do Supabase.
+      // Exemplo usando Prisma:
+      const result = await prisma.$queryRaw`SELECT 1`;
+      databaseStatus = result ? "online" : "offline";
     } catch {
-      dbStatus = "offline";
+      databaseStatus = "offline";
     }
 
-    // --- 3️⃣ API Health (Server) ---
-    // Aqui o servidor está respondendo → podemos considerar online
-    let apiStatus: "online" | "offline" = "online";
-
-    // --- 4️⃣ Retorna resultado consolidado ---
+    // Retorna resultado público
     res.json({
       api: apiStatus,
-      database: dbStatus,
+      database: databaseStatus,
     });
-
-  } catch (err) {
+  } catch (err: any) {
     res.status(500).json({
       api: "offline",
       database: "offline",
-      details: (err as Error).message,
+      details: err.message,
     });
   }
 }
