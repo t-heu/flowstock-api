@@ -1,42 +1,41 @@
-# syntax = docker/dockerfile:1
-
+# syntax=docker/dockerfile:1
 ARG NODE_VERSION=20.19.1
 FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="Node.js"
-
 WORKDIR /app
-ENV NODE_ENV="production"
+ENV NODE_ENV=production
 
-# Build stage
+# Instala ferramentas de build (somente build stage precisa)
 FROM base AS build
-
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
 
-# Install dependencies
-COPY package-lock.json package.json ./
+# Copia package.json e package-lock
+COPY package*.json ./
+
+# Instala dependências incluindo dev (para tsup)
 RUN npm ci --include=dev
 
-# Copy source code
+# Copia o código
 COPY . .
 
-# Build TS code (tsup) WITHOUT tentar importar Prisma Client
+# Build da aplicação
 RUN npm run build
 
-# Remove dev dependencies
+# Remove devDependencies para reduzir tamanho
 RUN npm prune --omit=dev
 
-# Final stage
+# Final image
 FROM base
 
 WORKDIR /app
 
-# Copy built app
+# Copia tudo do build
 COPY --from=build /app /app
 
-# Expose port
+# Porta padrão
 EXPOSE 3000
 
-# Generate Prisma Client e start app no runtime
-CMD [ "npm", "run", "start" ]
+# Start com Prisma generate no runtime
+CMD ["sh", "-c", "npx prisma generate && node dist/server.js"]
