@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
-
 export const prisma =
   globalForPrisma.prisma || new PrismaClient({ log: ['query'] });
 
