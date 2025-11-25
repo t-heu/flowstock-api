@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
+import {ApiError} from "../errors/ApiError";
+
 import logger from "../logger";
 
 // Middleware global de tratamento de erros
@@ -9,13 +11,18 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
+  if (err instanceof ApiError) {
+    res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
   logger.warn("Erro no servidor:", err);
 
   // Retorna erro padronizado para o front
   res.status(500).json({
     success: false,
-    status: "error",
-    error: "Ocorreu um erro no servidor",
-    details: err.message || null, // opcional, ajuda no debug
+    message: "Ocorreu um erro no servidor",
   });
 }

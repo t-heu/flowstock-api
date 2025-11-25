@@ -1,9 +1,10 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 import { reportService } from "./report.service";
+import {ApiError} from "../../errors/ApiError"
 
 export const reportController = {
-  async getReportDetailed(req: Request, res: Response) {
+  async getReportDetailed(req: Request, res: Response, next: NextFunction) {
     try {
       const {
         branchId,
@@ -27,7 +28,11 @@ export const reportController = {
 
       return res.status(result.success ? 200 : 400).json(result);
     } catch (err: any) {
-      return res.status(500).json({ success: false, error: err.message });
+      if (err instanceof ApiError) {
+        return next(err)
+      }
+
+      return next(new Error("Error interno", err.message));
     }
   },
 };

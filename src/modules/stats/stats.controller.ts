@@ -1,17 +1,22 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 import { statsService } from "./stats.service";
+import {ApiError} from "../../errors/ApiError"
 
 export const statsController = {
-  async getStats(req: Request, res: Response) {
+  async getStats(req: Request, res: Response, next: NextFunction) {
     try {
       const branchFilter = req.query.branch as string;
 
       const result = await statsService.getStats(req.user, branchFilter);
 
       return res.status(200).json(result);
-    } catch (e: any) {
-      return res.status(500).json({ success: false, error: e.message });
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        return next(err)
+      }
+
+      return next(new Error("Error interno", err.message));
     }
   },
 };

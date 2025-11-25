@@ -1,9 +1,10 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 import {movementService} from "./movement.service";
+import {ApiError} from "../../errors/ApiError"
 
 export const movementController = {
-  async getAllMovement(req: Request, res: Response) {
+  async getAllMovement(req: Request, res: Response, next: NextFunction) {
     try {
       const user = req.user;
       const typeQuery = req.query.type;
@@ -15,30 +16,39 @@ export const movementController = {
 
       const result = await movementService.getMovements(user, typeQuery); // agora é só "entrada" | "saida"
       return res.status(result.success ? 200 : 400).json(result);
-    } catch (err) {
-      console.error("Erro interno:", err);
-      res.status(500).json({ success: false, message: "Erro interno" });
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        return next(err)
+      }
+
+      return next(new Error("Error interno", err.message));
     }
   },
 
-  async createMovement(req: Request, res: Response) {
+  async createMovement(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await movementService.createMovement(req.body);
       return res.status(result.success ? 201 : 400).json(result);
-    } catch (err) {
-      console.error("Erro interno:", err);
-      res.status(500).json({ success: false, message: "Erro interno" });
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        return next(err)
+      }
+
+      return next(new Error("Error interno", err.message));
     }
   },
 
-  async deleteMovement(req: Request, res: Response) {
+  async deleteMovement(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const result = await movementService.deleteMovement(id);
       return res.status(result.success ? 200 : 400).json(result);
-    } catch (err) {
-      console.error("Erro interno:", err);
-      res.status(500).json({ success: false, message: "Erro interno" });
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        return next(err)
+      }
+
+      return next(new Error("Error interno", err.message));
     }
   },
 };

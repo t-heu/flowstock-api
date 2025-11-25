@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
-import { prisma } from "../../lib/prisma";
 
+import { prisma } from "../../lib/prisma";
+import {ApiError} from "../../errors/ApiError"
 import { fetchMovementsBase } from "./movementBase";
 
 export const movementService = {
@@ -13,7 +14,11 @@ export const movementService = {
 
       return { success: true, data: movements };
     } catch (err: any) {
-      return { success: false, error: err.message };
+      if (err instanceof ApiError) {
+        throw err
+      }
+  
+      throw new Error("Error interno", err.message);
     }
   },
 
@@ -30,7 +35,7 @@ export const movementService = {
       const product = await prisma.products.findUnique({
         where: { id: movement.product_id },
       });
-      if (!product) return { success: false, error: "Produto não encontrado" };
+      if (!product) throw new ApiError("Produto não encontrado");
 
       // Busca estoque da filial
       const stockRow = await prisma.stock.findFirst({
@@ -44,7 +49,7 @@ export const movementService = {
 
       if (movement.type === "saida") {
         if (currentQty === null || currentQty < movement.quantity) {
-          return { success: false, error: `Estoque insuficiente (${currentQty ?? 0})` };
+          throw new ApiError(`Estoque insuficiente (${currentQty ?? 0})`);
         }
       }
 
@@ -73,7 +78,7 @@ export const movementService = {
           },
         });
       } else {
-        return { success: false, error: "Filial sem estoque desse produto" };
+        throw new ApiError("Filial sem estoque desse produto");
       }
 
       // Transferência entre filiais
@@ -119,7 +124,11 @@ export const movementService = {
 
       return { success: true, data: inserted };
     } catch (err: any) {
-      return { success: false, error: err?.message || "Erro ao criar movimento" };
+      if (err instanceof ApiError) {
+        throw err
+      }
+  
+      throw new Error("Error interno", err.message);
     }
   },
 
@@ -128,7 +137,11 @@ export const movementService = {
       await prisma.movements.delete({ where: { id } });
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || "Erro ao deletar movimento" };
+      if (err instanceof ApiError) {
+        throw err
+      }
+  
+      throw new Error("Error interno", err.message);
     }
   },
 };

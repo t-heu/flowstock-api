@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
+
 import { prisma } from "../../lib/prisma";
+import {ApiError} from "../../errors/ApiError"
 import { ProductDTO, Product } from "../../shared/types";
 
 /* LIST */
@@ -11,7 +13,11 @@ export const getProductsAll = async (user: any) => {
 
     return { success: true, data };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    if (err instanceof ApiError) {
+      throw err
+    }
+
+    throw new Error("Error interno", err.message);
   }
 };
 
@@ -31,7 +37,11 @@ export const createProduct = async (
 
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    if (err instanceof ApiError) {
+      throw err
+    }
+
+    throw new Error("Error interno", err.message);
   }
 };
 
@@ -40,15 +50,20 @@ export const deleteProduct = async (user: any, id: string) => {
   try {
     const product = await prisma.products.findUnique({ where: { id } });
 
-    if (!product) return { success: false, error: "Produto não encontrado" };
+    if (!product) throw new Error("Produto não encontrado");
+
     if (user.role !== "admin" && product.department !== user.department) {
-      return { success: false, error: "Sem permissão" };
+      throw new Error("Sem permissão");
     }
 
     await prisma.products.delete({ where: { id } });
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    if (err instanceof ApiError) {
+      throw err
+    }
+
+    throw new Error("Error interno", err.message);
   }
 };
 
@@ -61,9 +76,10 @@ export const updateProduct = async (
   try {
     const product = await prisma.products.findUnique({ where: { id } });
 
-    if (!product) return { success: false, error: "Produto não encontrado" };
+    if (!product) throw new ApiError("Produto não encontrado");
+
     if (user.role !== "admin" && product.department !== user.department) {
-      return { success: false, error: "Sem permissão" };
+      throw new ApiError("Sem permissão");
     }
 
     await prisma.products.update({
@@ -73,6 +89,10 @@ export const updateProduct = async (
 
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    if (err instanceof ApiError) {
+      throw err
+    }
+
+    throw new Error("Error interno", err.message);
   }
 };

@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
+
+import {ApiError} from "../../errors/ApiError"
 import { prisma } from "../../lib/prisma";
 
 export const userService = {
@@ -22,7 +24,11 @@ export const userService = {
 
       return { success: true, data: users };
     } catch (err: any) {
-      return { success: false, error: err?.message || "Erro ao buscar usuários" };
+      if (err instanceof ApiError) {
+        throw err
+      }
+
+      throw new Error("Error interno", err.message);
     }
   },
 
@@ -45,11 +51,13 @@ export const userService = {
 
       return { success: true };
     } catch (err: any) {
-      if (err.code === "P2002") {
-        // unique constraint failed
-        return { success: false, error: "Email ou username já cadastrado" };
+      if (err.code === "P2002") throw new ApiError("Email ou username já cadastrado");
+
+      if (err instanceof ApiError) {
+        throw err
       }
-      return { success: false, error: err?.message || "Erro ao criar usuário" };
+
+      throw new Error("Error interno", err.message);
     }
   },
 
@@ -72,7 +80,11 @@ export const userService = {
 
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || "Erro ao atualizar usuário" };
+      if (err instanceof ApiError) {
+        throw err
+      }
+
+      throw new Error("Error interno", err.message);
     }
   },
 
@@ -81,7 +93,11 @@ export const userService = {
       await prisma.users.delete({ where: { id } });
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || "Erro ao deletar usuário" };
+      if (err instanceof ApiError) {
+        throw err
+      }
+
+      throw new Error("Error interno", err.message);
     }
   },
 };

@@ -12,7 +12,6 @@ import healthRoutes from "./modules/health/health.routes";
 
 const router = Router();
 
-// Registrar módulos
 router.use("/branches", branchRoutes);
 router.use("/stock", branchStockRoutes);
 router.use("/auth", authRoutes);
@@ -21,6 +20,6 @@ router.use("/users", userRoutes);
 router.use("/products", productRoutes);
 router.use("/report", reportRoutes);
 router.use("/stats", statsRoutes);
-router.use("/health", healthRoutes);
+router.use("/health", healthRoutes); //healthcheck
 
 export default router;

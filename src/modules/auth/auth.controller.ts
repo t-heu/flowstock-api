@@ -1,18 +1,23 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 import { authService } from "./auth.service";
 
+import {ApiError} from "../../errors/ApiError"
+
 export const authController = {
-  async login(req: Request, res: Response) {
+  async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
 
       const result = await authService.login(username, password);
 
       return res.status(result.success ? 200 : 401).json(result);
-    } catch (err) {
-      console.error("Erro no login:", err);
-      res.status(500).json({ success: false, message: "Erro interno" });
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        return next(err)
+      }
+
+      return next(new Error("Error interno", err.message));
     }
   }
 };

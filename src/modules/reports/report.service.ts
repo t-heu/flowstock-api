@@ -1,5 +1,7 @@
 import { fetchMovementsBase } from "../movements/movementBase";
 
+import {ApiError} from "../../errors/ApiError"
+
 export const reportService = {
   async getDetailedReport({
     branchId = "all",
@@ -18,6 +20,7 @@ export const reportService = {
     type?: "entrada" | "saida" | "all";
     user: any;
   }) {
+    try {
     const department =
       user && user.role !== "admin" ? user.department : undefined;
 
@@ -38,5 +41,12 @@ export const reportService = {
       page,
       pageSize,
     };
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        throw err
+      }
+
+      throw new Error("Error interno", err.message);
+    }
   },
 };

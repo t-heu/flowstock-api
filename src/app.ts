@@ -27,6 +27,23 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(compression());
 
+app.use((req, res, next) => {
+  res.setTimeout(15000, () => {
+    // Esta callback roda quando o tempo estourou
+    return res.status(503).json({
+      status: "error",
+      message: "Request timeout",
+    });
+  });
+  
+  next();
+});
+
+app.use((req, res, next) => {
+  logger.info(`[${req.method}] ${req.url}`);
+  next();
+});
+
 // Rotas
 app.use("/api", mainRoutes);
 
@@ -41,5 +58,14 @@ app.use((req, res, next) => {
 
 // Middleware global de erros (deve vir depois das rotas)
 app.use(errorHandler);
+
+// Captura erros globais para não derrubar o servidor
+process.on("uncaughtException", (err) => {
+  console.error("Erro não tratado (uncaughtException):", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Rejeição de promessa não tratada:", reason);
+});
 
 export default app;

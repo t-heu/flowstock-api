@@ -1,12 +1,19 @@
 import { v4 as uuidv4 } from "uuid";
+
 import { prisma } from "../../lib/prisma";
+
+import {ApiError} from "../../errors/ApiError"
 
 export const getBranches = async () => {
   try {
     const data = await prisma.branches.findMany();
     return { success: true, data };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    if (err instanceof ApiError) {
+      throw err
+    }
+
+    throw new Error("Error interno", err.message);
   }
 };
 
@@ -22,7 +29,11 @@ export const addBranch = async (branch: { code: string; name: string }) => {
     });
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    if (err instanceof ApiError) {
+      throw err
+    }
+
+    throw new Error("Error interno", err.message);
   }
 };
 
@@ -34,7 +45,11 @@ export const updateBranch = async (id: string, updates: Partial<{ code: string; 
     });
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    if (err instanceof ApiError) {
+      throw err
+    }
+
+    throw new Error("Error interno", err.message);
   }
 };
 
@@ -43,8 +58,13 @@ export const deleteBranch = async (id: string) => {
     await prisma.branches.delete({
       where: { id },
     });
+    
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    if (err instanceof ApiError) {
+      throw err
+    }
+
+    throw new Error("Error interno", err.message);
   }
 };

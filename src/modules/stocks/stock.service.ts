@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import {ApiError} from "../../errors/ApiError"
 import { BranchStockItem } from "../../shared/types";
 
 export const stockService = {
@@ -22,7 +23,11 @@ export const stockService = {
 
       return { success: true, data: normalized };
     } catch (err: any) {
-      return { success: false, error: err?.message || "Erro ao carregar estoque por filial" };
+      if (err instanceof ApiError) {
+        throw err
+      }
+  
+      throw new Error("Error interno", err.message);
     }
   },
 };
