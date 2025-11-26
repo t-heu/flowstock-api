@@ -4,11 +4,19 @@ import {movementController} from "./movement.controller";
 
 import { allowRoles } from "../../middlewares/permission";
 import { authenticate } from "../../middlewares/authenticate";
+import { validate } from "../../middlewares/validate";
+
+import { MovementSchema } from "./movement.schema";
 
 const router = Router();
 
 router.get("/", authenticate, allowRoles("admin", "manager", "operator"), movementController.getAllMovement);
-router.post("/", authenticate, allowRoles("admin", "manager", "operator"), movementController.createMovement);
+router.post("/", 
+  authenticate, 
+  allowRoles("admin", "manager", "operator"),
+  validate(MovementSchema),
+  movementController.createMovement
+);
 router.delete("/:id", authenticate, allowRoles("admin", "manager"), movementController.deleteMovement);
 
 export default router;

@@ -15,6 +15,7 @@ export function errorHandler(
     res.status(err.statusCode).json({
       success: false,
       message: err.message,
+      correlationId: req.id,
     });
   }
 
@@ -24,5 +25,6 @@ export function errorHandler(
   res.status(500).json({
     success: false,
     message: "Ocorreu um erro no servidor",
+    correlationId: req.id,
   });
 }

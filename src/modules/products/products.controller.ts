@@ -19,7 +19,7 @@ export const productsController = {
 
   createProduct: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await productService.createProduct(req.user, req.body);
+      const result = await productService.createProduct(req.user, req.data);
       res.status(result.success ? 201 : 400).json(result);
     } catch (err: any) {
       if (err instanceof ApiError) {
@@ -48,7 +48,7 @@ export const productsController = {
       const result = await productService.updateProduct(
         req.user,
         req.params.id,
-        req.body
+        req.data
       );
       res.status(result.success ? 200 : 400).json(result);
     } catch (err: any) {

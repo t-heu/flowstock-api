@@ -19,7 +19,7 @@ export const userController = {
 
   async createUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await userService.createUser(req.body);
+      const result = await userService.createUser(req.data);
       return res.status(result.success ? 201 : 400).json(result);
     } catch (err: any) {
       if (err instanceof ApiError) {
@@ -32,7 +32,7 @@ export const userController = {
 
   async updateUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await userService.updateUser(req.params.id, req.body);
+      const result = await userService.updateUser(req.params.id, req.data);
       return res.status(result.success ? 200 : 400).json(result);
     } catch (err: any) {
       if (err instanceof ApiError) {

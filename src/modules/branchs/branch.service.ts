@@ -43,6 +43,7 @@ export const updateBranch = async (id: string, updates: Partial<{ code: string; 
       where: { id },
       data: updates,
     });
+    
     return { success: true };
   } catch (err: any) {
     if (err instanceof ApiError) {

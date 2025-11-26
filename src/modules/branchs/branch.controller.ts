@@ -19,7 +19,8 @@ export const branchController = {
 
   async createBranch(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await BranchService.addBranch(req.body);
+      const result = await BranchService.addBranch(req.data);
+      
       res.status(result.success ? 201 : 500).json(result);
     } catch (err: any) {
      if (err instanceof ApiError) {
@@ -33,7 +34,7 @@ export const branchController = {
   async updateBranch(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const result = await BranchService.updateBranch(id, req.body);
+      const result = await BranchService.updateBranch(id, req.data);
       
       res.status(result.success ? 200 : 500).json(result);
     } catch (err: any) {

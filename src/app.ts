@@ -5,6 +5,8 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
 import { errorHandler } from "./middlewares/errorHandler";
+import { correlationId } from "./middlewares/correlationId";
+
 import mainRoutes from "./routes";
 import logger from "./logger";
 
@@ -27,12 +29,16 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(compression());
 
+// ✅ correlation ID — precisa vir ANTES de tudo que loga
+app.use(correlationId);
+
 app.use((req, res, next) => {
   res.setTimeout(15000, () => {
     // Esta callback roda quando o tempo estourou
     return res.status(503).json({
       status: "error",
       message: "Request timeout",
+      correlationId: req.id, // opcional
     });
   });
   
@@ -40,7 +46,22 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  logger.info(`[${req.method}] ${req.url}`);
+  const start = Date.now();
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+
+    logger.info({
+      id: req.id,
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      duration: `${duration}ms`,
+      ip: req.ip,
+      agent: req.headers["user-agent"],
+    });
+  });
+
   next();
 });
 

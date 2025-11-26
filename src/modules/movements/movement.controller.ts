@@ -27,7 +27,8 @@ export const movementController = {
 
   async createMovement(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await movementService.createMovement(req.body);
+      const result = await movementService.createMovement(req.data);
+      
       return res.status(result.success ? 201 : 400).json(result);
     } catch (err: any) {
       if (err instanceof ApiError) {
