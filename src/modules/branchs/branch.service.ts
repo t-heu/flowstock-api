@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 
-import { prisma } from "../../lib/prisma";
+import { prisma } from "../../core/prisma/client";
 
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
 export const getBranches = async () => {
   try {

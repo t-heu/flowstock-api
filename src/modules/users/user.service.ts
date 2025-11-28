@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 
-import {ApiError} from "../../errors/ApiError"
-import { prisma } from "../../lib/prisma";
+import {ApiError} from "../../core/errors/ApiError"
+import { prisma } from "../../core/prisma/client";
 
 export const userService = {
   async getAllUser() {

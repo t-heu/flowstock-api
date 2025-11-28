@@ -1,4 +1,4 @@
-import { prisma } from "../../lib/prisma";
+import { prisma } from "../../core/prisma/client";
 import { performance } from "perf_hooks";
 
 export async function checkAPI() {

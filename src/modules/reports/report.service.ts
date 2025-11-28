@@ -1,6 +1,6 @@
 import { fetchMovementsBase } from "../movements/movementBase";
 
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
 export const reportService = {
   async getDetailedReport({

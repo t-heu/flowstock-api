@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import * as productService from "./products.service";
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
 export const productsController = {
   getAllProducts: async (req: Request, res: Response, next: NextFunction) => {

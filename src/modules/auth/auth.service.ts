@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
-import { prisma } from "../../lib/prisma";
-import { AuthUser } from "../../shared/types";
-import { JWT_SECRET, TOKEN_EXPIRES } from "../../config/jwt";
+import { prisma } from "../../core/prisma/client";
+import { AuthUser } from "../../core/types";
+import { JWT_SECRET, TOKEN_EXPIRES } from "../../core/config/jwt";
 
 export const authService = {
   async login(username: string, password: string) {

@@ -2,9 +2,9 @@ import { Router } from "express";
 
 import {branchController} from "./branch.controller";
 
-import { authenticate } from "../../middlewares/authenticate";
-import { allowRoles } from "../../middlewares/permission";
-import { validate } from "../../middlewares/validate";
+import { authenticate } from "../../core/middlewares/authenticate";
+import { allowRoles } from "../../core/middlewares/permission";
+import { validate } from "../../core/middlewares/validate";
 
 import { CreateBranchSchema, UpdateBranchSchema } from "./branchs.schema";
 

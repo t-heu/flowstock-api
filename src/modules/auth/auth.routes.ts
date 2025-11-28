@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { authController } from "./auth.controller";
-import { validate } from "../../middlewares/validate";
+import { validate } from "../../core/middlewares/validate";
 
 import { LoginSchema } from "./auth.schema";
 

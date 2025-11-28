@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 import { stockService } from "./stock.service";
 
 export const stockController = {

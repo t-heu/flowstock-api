@@ -1,6 +1,6 @@
-import { prisma } from '../../lib/prisma';
+import { prisma } from '../../core/prisma/client';
 
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
 export const statsService = {
   async getStats(user: any, branchFilter?: string) {

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import {movementService} from "./movement.service";
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
 export const movementController = {
   async getAllMovement(req: Request, res: Response, next: NextFunction) {

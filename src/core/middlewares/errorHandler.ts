@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 import {ApiError} from "../errors/ApiError";
 
-import logger from "../logger";
+import logger from "../utils/logger";
 
 // Middleware global de tratamento de erros
 export function errorHandler(

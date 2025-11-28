@@ -1,6 +1,6 @@
-import { prisma } from "../../lib/prisma";
-import {ApiError} from "../../errors/ApiError"
-import { BranchStockItem } from "../../shared/types";
+import { prisma } from "../../core/prisma/client";
+import {ApiError} from "../../core/errors/ApiError"
+import { BranchStockItem } from "../../core/types";
 
 export const stockService = {
   async getStockAll(): Promise<{ success: boolean; data?: BranchStockItem[]; error?: string }> {

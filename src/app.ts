@@ -4,11 +4,12 @@ import compression from "compression";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
-import { errorHandler } from "./middlewares/errorHandler";
-import { correlationId } from "./middlewares/correlationId";
+import { errorHandler } from "./core/middlewares/errorHandler";
+import { correlationId } from "./core/middlewares/correlationId";
 
-import mainRoutes from "./routes";
-import logger from "./logger";
+import mainRoutes from "./core/routes";
+import logger from "./core/utils/logger";
+import { swaggerMiddleware } from "./swagger";
 
 const app = express();
 
@@ -64,6 +65,8 @@ app.use((req, res, next) => {
 
   next();
 });
+
+app.use("/docs", ...swaggerMiddleware);
 
 // Rotas
 app.use("/api", mainRoutes);

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 import { authService } from "./auth.service";
 
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
 export const authController = {
   async login(req: Request, res: Response, next: NextFunction) {

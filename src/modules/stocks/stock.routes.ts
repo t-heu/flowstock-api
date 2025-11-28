@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { stockController } from "./stock.controller";
 
-import { authenticate } from "../../middlewares/authenticate";
-import { allowRoles } from "../../middlewares/permission";
+import { authenticate } from "../../core/middlewares/authenticate";
+import { allowRoles } from "../../core/middlewares/permission";
 
 const router = Router();
 

@@ -1,0 +1,690 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API FlowStock",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/stock": {
+      "get": {
+        "summary": "Listar o estoque",
+        "tags": ["Stock"],
+        "security": [{ "bearerAuth": [] }],
+        "description": "Acesso permitido para admin, manager e operator.",
+        "responses": {
+          "200": {
+            "description": "Lista de estoque retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Verifica a saúde da API e do banco de dados",
+        "responses": {
+          "200": {
+            "description": "Status da API e do banco",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "api": {
+                      "type": "object",
+                      "properties": {
+                        "status": { "type": "string", "example": "healthy" },
+                        "uptime": { "type": "number", "example": 12345.67 },
+                        "version": { "type": "string", "example": "v18.19.0" }
+                      }
+                    },
+                    "database": {
+                      "type": "object",
+                      "properties": {
+                        "status": { "type": "string", "example": "healthy" },
+                        "latency_ms": { "type": "number", "example": 4.52 },
+                        "version": { "type": "string", "example": "PostgreSQL 15.3" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login do usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login bem sucedido (token retornado)"
+          },
+          "400": {
+            "description": "Erro de validação ou credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "summary": "Obter estatísticas gerais",
+        "tags": ["Stats"],
+        "security": [{ "bearerAuth": [] }],
+        "description": "Acesso permitido para admin, manager e operator.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "branch",
+            "schema": { "type": "string" },
+            "required": false,
+            "description": "Filtra as estatísticas por ID da filial"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estatísticas retornadas com sucesso"
+          }
+        }
+      }
+    },
+    "/api/movement": {
+      "get": {
+        "tags": ["Movements"],
+        "summary": "Lista movimentos de entrada ou saída",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["entrada", "saida"]
+            },
+            "description": "Tipo do movimento"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Lista retornada com sucesso" },
+          "400": { "description": "Tipo inválido" }
+        }
+      },
+      "post": {
+        "tags": ["Movements"],
+        "summary": "Cria um novo movimento",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "product_department": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "product_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "branch_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "destination_branch_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 999999
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["entrada", "saida"]
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "invoice_number": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "product_department",
+                  "product_id",
+                  "branch_id",
+                  "quantity",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Movimento criado com sucesso" },
+          "400": { "description": "Erro de validação" }
+        }
+      }
+    },
+    "/api/movement/{id}": {
+      "delete": {
+        "tags": ["Movements"],
+        "summary": "Remove um movimento",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Movimento removido" },
+          "400": { "description": "Erro ao remover" }
+        }
+      }
+    },
+    "/api/branch": {
+      "get": {
+        "tags": ["Branches"],
+        "summary": "Listar todas as filiais",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Lista de filiais retornada com sucesso" }
+        }
+      },
+      "post": {
+        "tags": ["Branches"],
+        "summary": "Criar uma nova filial",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 100
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10
+                  }
+                },
+                "required": ["name", "code"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Filial criada com sucesso" },
+          "400": { "description": "Erro de validação" }
+        }
+      }
+    },
+    "/api/branch/{id}": {
+      "put": {
+        "tags": ["Branches"],
+        "summary": "Atualizar uma filial",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 100
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Filial atualizada com sucesso" },
+          "400": { "description": "Erro de validação" }
+        }
+      },
+      "delete": {
+        "tags": ["Branches"],
+        "summary": "Deletar uma filial",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Filial removida com sucesso" },
+          "400": { "description": "Erro ao remover" }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "summary": "Listar todos os produtos",
+        "tags": ["Products"],
+        "security": [{ "bearerAuth": [] }],
+        "description": "Acesso permitido para admin, manager e operator.",
+        "responses": {
+          "200": { "description": "Lista de produtos retornada com sucesso" }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo produto",
+        "tags": ["Products"],
+        "security": [{ "bearerAuth": [] }],
+        "description": "Acesso permitido para admin e manager.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Produto criado com sucesso" },
+          "400": { "description": "Dados inválidos" }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "put": {
+        "summary": "Atualizar um produto",
+        "tags": ["Products"],
+        "security": [{ "bearerAuth": [] }],
+        "description": "Acesso permitido para admin e manager.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Produto atualizado" },
+          "404": { "description": "Produto não encontrado" },
+          "400": { "description": "Dados inválidos" }
+        }
+      },
+      "delete": {
+        "summary": "Excluir um produto",
+        "tags": ["Products"],
+        "security": [{ "bearerAuth": [] }],
+        "description": "Acesso permitido apenas para admin.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Produto removido" },
+          "404": { "description": "Produto não encontrado" }
+        }
+      }
+    },
+    "/api/detailed": {
+      "get": {
+        "summary": "Relatório detalhado",
+        "tags": ["Reports"],
+        "security": [{ "bearerAuth": [] }],
+        "description": "Acesso permitido para admin, manager e operator.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "branchId",
+            "required": false,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Filtrar por ID da filial"
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "required": false,
+            "schema": { "type": "string", "format": "date" },
+            "description": "Data inicial do filtro (YYYY-MM-DD)"
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "required": false,
+            "schema": { "type": "string", "format": "date" },
+            "description": "Data final do filtro (YYYY-MM-DD)"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 },
+            "description": "Página da listagem"
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 },
+            "description": "Tamanho da página"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["in", "out", "transfer", "all"]
+            },
+            "description": "Tipo do movimento (in, out, transfer ou all)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relatório detalhado retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "Listar todos os usuários",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de usuários retornada com sucesso"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo usuário",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateUser" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Usuário criado com sucesso" },
+          "400": { "description": "Dados inválidos" }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "put": {
+        "summary": "Atualizar um usuário",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateUser" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Usuário atualizado" },
+          "400": { "description": "Dados inválidos" },
+          "404": { "description": "Usuário não encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Remover um usuário",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Usuário removido" },
+          "404": { "description": "Usuário não encontrado" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ProductCreate": {
+        "type": "object",
+        "required": ["name", "code", "unit", "department"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 8
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Opcional"
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 4
+          },
+          "department": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 25
+          }
+        }
+      },
+      "ProductUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 8
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 4
+          },
+          "department": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 25
+          }
+        }
+      },
+      "CreateUser": {
+        "type": "object",
+        "required": [
+          "name",
+          "username",
+          "email",
+          "role",
+          "department",
+          "branchId"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 50
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 120
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "operator", "manager"],
+            "default": "operator"
+          },
+          "department": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateUser": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 50
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 120
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "operator", "manager"]
+          },
+          "department": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 128
+          }
+        }
+      }
+    }
+  }
+}

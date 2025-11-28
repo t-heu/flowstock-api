@@ -2,9 +2,9 @@ import { Router } from "express";
 
 import {movementController} from "./movement.controller";
 
-import { allowRoles } from "../../middlewares/permission";
-import { authenticate } from "../../middlewares/authenticate";
-import { validate } from "../../middlewares/validate";
+import { allowRoles } from "../../core/middlewares/permission";
+import { authenticate } from "../../core/middlewares/authenticate";
+import { validate } from "../../core/middlewares/validate";
 
 import { MovementSchema } from "./movement.schema";
 

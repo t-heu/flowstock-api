@@ -1,9 +1,9 @@
 import { Router } from "express";
 
 import { productsController } from "./products.controller";
-import { authenticate } from "../../middlewares/authenticate";
-import { allowRoles } from "../../middlewares/permission";
-import { validate } from "../../middlewares/validate";
+import { authenticate } from "../../core/middlewares/authenticate";
+import { allowRoles } from "../../core/middlewares/permission";
+import { validate } from "../../core/middlewares/validate";
 
 import { ProductSchema, ProductUpdateSchema } from "./products.schema";
 

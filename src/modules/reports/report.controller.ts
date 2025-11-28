@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import { reportService } from "./report.service";
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
 export const reportController = {
   async getReportDetailed(req: Request, res: Response, next: NextFunction) {

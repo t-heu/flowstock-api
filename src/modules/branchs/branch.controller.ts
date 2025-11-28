@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 import * as BranchService from "./branch.service";
 
 export const branchController = {

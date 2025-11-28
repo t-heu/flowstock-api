@@ -2,8 +2,8 @@ import { Router } from "express";
 
 import { statsController } from "./stats.controller";
 
-import { allowRoles } from "../../middlewares/permission";
-import { authenticate } from "../../middlewares/authenticate";
+import { allowRoles } from "../../core/middlewares/permission";
+import { authenticate } from "../../core/middlewares/authenticate";
 
 const router = Router();
 

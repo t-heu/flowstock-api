@@ -4,7 +4,7 @@ dotenv.config();
 import { createServer } from "http";
 
 import app from "./app";
-import logger from "./logger";
+import logger from "./core/utils/logger";
 
 const PORT = process.env.PORT || 3333;
 

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import { statsService } from "./stats.service";
-import {ApiError} from "../../errors/ApiError"
+import {ApiError} from "../../core/errors/ApiError"
 
 export const statsController = {
   async getStats(req: Request, res: Response, next: NextFunction) {
