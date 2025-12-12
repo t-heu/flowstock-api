@@ -8,8 +8,8 @@ import { LoginSchema } from "./auth.schema";
 const router = Router();
 
 router.post("/login", 
+  validate(LoginSchema),
   authController.login,
-  validate(LoginSchema)
 );
 
 export default router;
