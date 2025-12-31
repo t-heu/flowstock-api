@@ -42,6 +42,10 @@ app.use('*', async (c, next) => {
   });
 });
 
+app.get('/v1', (c) => {
+  return c.json({ status: 'ok' })
+})
+
 app.route('/docs', swagger);
 
 // Rotas
