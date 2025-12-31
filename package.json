@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "dev:cf": "wrangler dev",
     "prebuild": "prisma generate",
-    "build:node": "tsup src/server.ts --format esm --out-dir dist --clean",
+    "build:node": "npx tsup src/server.ts --format esm --out-dir dist --clean",
     "start": "node dist/server.js",
     "deploy:cf": "wrangler deploy"
   },
