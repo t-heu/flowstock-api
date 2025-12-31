@@ -1,22 +1,31 @@
-import { Request, Response, NextFunction } from "express";
+import type { Context } from 'hono';
 
-import { statsService } from "./stats.service";
-import {ApiError} from "../../core/errors/ApiError"
+import { statsService } from './stats.service';
+import { ApiError } from '../../core/errors/ApiError';
 
 export const statsController = {
-  async getStats(req: Request, res: Response, next: NextFunction) {
+  getStats: async (c: Context) => {
     try {
-      const branchFilter = req.query.branch as string;
+      const user = c.get('user');
+      const branchFilter = c.req.query('branch');
 
-      const result = await statsService.getStats(req.user, branchFilter);
+      const result = await statsService.getStats(user, branchFilter);
 
-      return res.status(200).json(result);
-    } catch (err: any) {
+      return c.json(result, 200);
+    } catch (err) {
       if (err instanceof ApiError) {
-        return next(err)
+        return c.json(
+          { success: false, message: err.message },
+          err.statusCode as 400 | 401 | 403 | 404 | 500
+        );
       }
 
-      return next(new Error("Error interno", err.message));
+      console.error(err);
+
+      return c.json(
+        { success: false, message: 'Erro interno' },
+        500
+      );
     }
-  },
+  }
 };

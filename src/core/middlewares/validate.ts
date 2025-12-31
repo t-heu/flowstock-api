@@ -1,17 +1,25 @@
-import { Request, Response, NextFunction } from "express";
-import { ZodSchema } from "zod";
+import { z } from 'zod';
+import type { MiddlewareHandler } from 'hono';
 
-export function validate(schema: ZodSchema) {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const validate =
+  (schema: z.ZodSchema): MiddlewareHandler =>
+  async (c, next) => {
     try {
-      req.data = schema.parse(req.body);
-      return next();
+      const body = await c.req.json();
+      const parsed = schema.parse(body);
+
+      // salva o body validado no contexto
+      c.set('validatedBody', parsed);
+
+      await next();
     } catch (err: any) {
-      return res.status(400).json({
-        success: false,
-        message: "Dados inválidos",
-        issues: err.errors,
-      });
+      return c.json(
+        {
+          status: 'error',
+          message: 'Validation error',
+          errors: err.errors ?? err.message
+        },
+        400
+      );
     }
   };
-}

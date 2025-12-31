@@ -1,11 +1,10 @@
-import { v4 as uuid } from "uuid";
-import { Request, Response, NextFunction } from "express";
+import type { MiddlewareHandler } from 'hono';
 
-export function correlationId(req: Request, res: Response, next: NextFunction) {
-  const id = uuid();
+export const correlationId: MiddlewareHandler = async (c, next) => {
+  const id = crypto.randomUUID();
 
-  req.id = id; // anexamos o ID à requisição
-  res.setHeader("X-Correlation-ID", id); // devolvemos para o cliente
+  c.set('correlationId', id);
+  c.header('X-Correlation-ID', id);
 
-  next();
-}
+  await next();
+};

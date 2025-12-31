@@ -1,15 +1,12 @@
-import dotenv from "dotenv";
-dotenv.config();
+import 'dotenv/config';
+import { serve } from '@hono/node-server';
+import app from './app';
 
-import { createServer } from "http";
+const port = Number(process.env.PORT || 3333);
 
-import app from "./app";
-import logger from "./core/utils/logger";
-
-const PORT = process.env.PORT || 3333;
-
-const server = createServer(app);
-
-server.listen(Number(PORT), "0.0.0.0", 0, () => {
-  logger.info(`API rodando na porta ${PORT}`)
+serve({
+  fetch: app.fetch,
+  port,
 });
+
+console.log(`API rodando na porta ${port}`);

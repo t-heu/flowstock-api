@@ -1,11 +1,16 @@
-import { Router } from "express";
-import { stockController } from "./stock.controller";
+import { Hono } from 'hono';
 
-import { authenticate } from "../../core/middlewares/authenticate";
-import { allowRoles } from "../../core/middlewares/permission";
+import { stockController } from './stock.controller';
+import { authenticate } from '../../core/middlewares/authenticate';
+import { allowRoles } from '../../core/middlewares/permission';
 
-const router = Router();
+const stockRoutes = new Hono();
 
-router.get("/", authenticate, allowRoles("admin", "manager", "operator"), stockController.getAllStock);
+stockRoutes.get(
+  '/',
+  authenticate,
+  allowRoles('admin', 'manager', 'operator'),
+  stockController.getAllStock
+);
 
-export default router;
+export default stockRoutes;

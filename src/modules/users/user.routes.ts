@@ -1,31 +1,42 @@
-import { Router } from "express";
+import { Hono } from 'hono';
 
-import { userController } from "./user.controller";
-import { authenticate } from "../../core/middlewares/authenticate";
-import { allowRoles } from "../../core/middlewares/permission";
-import { validate } from "../../core/middlewares/validate";
+import { userController } from './user.controller';
+import { authenticate } from '../../core/middlewares/authenticate';
+import { allowRoles } from '../../core/middlewares/permission';
+import { validate } from '../../core/middlewares/validate';
 
-import { createUserSchema, updateUserSchema } from "./user.schema";
+import { createUserSchema, updateUserSchema } from './user.schema';
 
-const router = Router();
+const userRoutes = new Hono();
 
-router.get("/", 
-  authenticate, 
-  allowRoles("admin", "manager"), 
+userRoutes.get(
+  '/',
+  authenticate,
+  allowRoles('admin', 'manager'),
   userController.getAllUser
 );
-router.post("/", 
-  authenticate, 
-  allowRoles("admin"), 
+
+userRoutes.post(
+  '/',
+  authenticate,
+  allowRoles('admin'),
   validate(createUserSchema),
   userController.createUser
 );
-router.put("/:id", 
-  authenticate, 
-  allowRoles("admin", "manager"), 
+
+userRoutes.put(
+  '/:id',
+  authenticate,
+  allowRoles('admin', 'manager'),
   validate(updateUserSchema),
   userController.updateUser
 );
-router.delete("/:id", authenticate, allowRoles("admin"), userController.removeUser);
 
-export default router;
+userRoutes.delete(
+  '/:id',
+  authenticate,
+  allowRoles('admin'),
+  userController.removeUser
+);
+
+export default userRoutes;

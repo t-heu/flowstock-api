@@ -1,19 +1,31 @@
-import { Request, Response, NextFunction } from "express";
+import type { Context } from 'hono';
 
-import {ApiError} from "../../core/errors/ApiError"
-import { stockService } from "./stock.service";
+import { stockService } from './stock.service';
+import { ApiError } from '../../core/errors/ApiError';
 
 export const stockController = {
-  async getAllStock(req: Request, res: Response, next: NextFunction) {
+  getAllStock: async (c: Context) => {
     try {
       const result = await stockService.getStockAll();
-      return res.status(result.success ? 200 : 500).json(result);
-    } catch (err: any) {
+
+      return c.json(
+        result,
+        result.success ? 200 : 500
+      );
+    } catch (err) {
       if (err instanceof ApiError) {
-        return next(err)
+        return c.json(
+          { success: false, message: err.message },
+          err.statusCode as 400 | 401 | 403 | 404 | 500
+        );
       }
 
-      return next(new Error("Error interno", err.message));
+      console.error(err);
+
+      return c.json(
+        { success: false, message: 'Erro interno' },
+        500
+      );
     }
   }
 };

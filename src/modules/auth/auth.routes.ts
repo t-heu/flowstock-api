@@ -1,15 +1,16 @@
-import { Router } from "express";
+import { Hono } from 'hono';
 
-import { authController } from "./auth.controller";
-import { validate } from "../../core/middlewares/validate";
+import { authController } from './auth.controller';
+import { validate } from '../../core/middlewares/validate';
 
-import { LoginSchema } from "./auth.schema";
+import { LoginSchema } from './auth.schema';
 
-const router = Router();
+const router = new Hono();
 
-router.post("/login", 
+router.post(
+  '/login',
   validate(LoginSchema),
-  authController.login,
+  authController.login
 );
 
 export default router;

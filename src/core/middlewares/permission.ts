@@ -1,16 +1,24 @@
-// src/middlewares/permission.ts
-import { Request, Response, NextFunction } from "express";
+import type { MiddlewareHandler } from 'hono';
+import type { UserSession } from './authenticate';
 
 export const allowRoles =
-  (...roles: string[]) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Não autenticado" });
+  (...roles: UserSession['role'][]): MiddlewareHandler =>
+  async (c, next) => {
+    const user = c.get('user') as UserSession | undefined;
+
+    if (!user) {
+      return c.json(
+        { error: 'Não autenticado' },
+        401
+      );
     }
 
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: "Sem permissão" });
+    if (!roles.includes(user.role)) {
+      return c.json(
+        { error: 'Sem permissão' },
+        403
+      );
     }
 
-    return next();
+    await next();
   };

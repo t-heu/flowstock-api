@@ -1,12 +1,16 @@
-import { Router } from "express";
+import { Hono } from 'hono';
 
-import { reportController } from "./report.controller";
+import { reportController } from './report.controller';
+import { authenticate } from '../../core/middlewares/authenticate';
+import { allowRoles } from '../../core/middlewares/permission';
 
-import { allowRoles } from "../../core/middlewares/permission";
-import { authenticate } from "../../core/middlewares/authenticate";
+const reportRoutes = new Hono();
 
-const router = Router();
+reportRoutes.get(
+  '/detailed',
+  authenticate,
+  allowRoles('admin', 'manager', 'operator'),
+  reportController.getReportDetailed
+);
 
-router.get("/detailed", authenticate, allowRoles("admin", "manager", "operator"), reportController.getReportDetailed);
-
-export default router;
+export default reportRoutes;

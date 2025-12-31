@@ -1,38 +1,38 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import type { MiddlewareHandler } from 'hono';
+import jwt from 'jsonwebtoken';
 
 export interface UserSession {
   id: string;
-  role: "admin" | "manager" | "operator";
+  role: 'admin' | 'manager' | 'operator';
   department: string | null;
   branch_id: string | null;
 }
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: UserSession;
-    }
-  }
-}
-
-export const authenticate = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const authenticate: MiddlewareHandler = async (c, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: "Token não enviado" });
+    const authHeader = c.req.header('authorization');
 
-    const token = authHeader.replace("Bearer ", "").trim();
-    if (!token) return res.status(401).json({ error: "Token inválido" });
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as UserSession;
-    req.user = decoded;
+    if (!authHeader) {
+      return c.json({ error: 'Token não enviado' }, 401);
+    }
 
-    return next();
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      return c.json({ error: 'Token inválido' }, 401);
+    }
+
+    const decoded = jwt.verify(
+      token,
+      c.env.JWT_SECRET
+    ) as UserSession;
+
+    c.set('user', decoded);
+
+    await next();
   } catch (err) {
-    return res.status(401).json({ error: "Token inválido ou expirado" });
+    return c.json(
+      { error: 'Token inválido ou expirado' },
+      401
+    );
   }
 };

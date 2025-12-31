@@ -1,22 +1,35 @@
-import { Router } from "express";
+import { Hono } from 'hono';
 
-import {movementController} from "./movement.controller";
+import { movementController } from './movement.controller';
 
-import { allowRoles } from "../../core/middlewares/permission";
-import { authenticate } from "../../core/middlewares/authenticate";
-import { validate } from "../../core/middlewares/validate";
+import { authenticate } from '../../core/middlewares/authenticate';
+import { allowRoles } from '../../core/middlewares/permission';
+import { validate } from '../../core/middlewares/validate';
 
-import { MovementSchema } from "./movement.schema";
+import { MovementSchema } from './movement.schema';
 
-const router = Router();
+const movementRoutes = new Hono();
 
-router.get("/", authenticate, allowRoles("admin", "manager", "operator"), movementController.getAllMovement);
-router.post("/", 
-  authenticate, 
-  allowRoles("admin", "manager", "operator"),
+movementRoutes.get(
+  '/',
+  authenticate,
+  allowRoles('admin', 'manager', 'operator'),
+  movementController.getAllMovement
+);
+
+movementRoutes.post(
+  '/',
+  authenticate,
+  allowRoles('admin', 'manager', 'operator'),
   validate(MovementSchema),
   movementController.createMovement
 );
-router.delete("/:id", authenticate, allowRoles("admin", "manager"), movementController.deleteMovement);
 
-export default router;
+movementRoutes.delete(
+  '/:id',
+  authenticate,
+  allowRoles('admin', 'manager'),
+  movementController.deleteMovement
+);
+
+export default movementRoutes;

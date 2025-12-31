@@ -1,63 +1,65 @@
-import { Request, Response, NextFunction } from "express";
+import type { Context } from 'hono';
 
-import {ApiError} from "../../core/errors/ApiError"
-import * as BranchService from "./branch.service";
+import { ApiError } from '../../core/errors/ApiError';
+import * as BranchService from './branch.service';
 
 export const branchController = {
-  async getAllBranch(req: Request, res: Response, next: NextFunction) {
-    try {
-      const result = await BranchService.getBranches();
-      res.status(result.success ? 200 : 500).json(result);
-    } catch (err: any) {
-      if (err instanceof ApiError) {
-        return next(err)
-      }
+  getAllBranch: async (c: Context) => {
+    const result = await BranchService.getBranches();
 
-      return next(new Error("Error interno", err.message));
+    if (!result.success) {
+      throw new ApiError(
+        'Erro ao buscar filiais',
+        500
+      );
     }
+
+    return c.json(result, 200);
   },
 
-  async createBranch(req: Request, res: Response, next: NextFunction) {
-    try {
-      const result = await BranchService.addBranch(req.data);
-      
-      res.status(result.success ? 201 : 500).json(result);
-    } catch (err: any) {
-     if (err instanceof ApiError) {
-        return next(err)
-      }
+  createBranch: async (c: Context) => {
+    const data = c.get('validatedBody');
 
-      return next(new Error("Error interno", err.message));
+    const result = await BranchService.addBranch(data);
+
+    if (!result.success) {
+      throw new ApiError(
+        'Erro ao criar filial',
+        500
+      );
     }
+
+    return c.json(result, 201);
   },
 
-  async updateBranch(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { id } = req.params;
-      const result = await BranchService.updateBranch(id, req.data);
-      
-      res.status(result.success ? 200 : 500).json(result);
-    } catch (err: any) {
-      if (err instanceof ApiError) {
-        return next(err)
-      }
+  updateBranch: async (c: Context) => {
+    const id = c.req.param('id');
+    const data = c.get('validatedBody');
 
-      return next(new Error("Error interno", err.message));
+    const result = await BranchService.updateBranch(id, data);
+
+    if (!result.success) {
+      throw new ApiError(
+        'Erro ao atualizar filial',
+        500
+      );
     }
+
+    return c.json(result, 200);
   },
 
-  async deleteBranch(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { id } = req.params;
-      const result = await BranchService.deleteBranch(id);
+  deleteBranch: async (c: Context) => {
+    const id = c.req.param('id');
 
-      res.status(result.success ? 200 : 500).json(result);
-    } catch (err: any) {
-      if (err instanceof ApiError) {
-        return next(err)
-      }
+    const result = await BranchService.deleteBranch(id);
 
-      return next(new Error("Error interno", err.message));
+    if (!result.success) {
+      throw new ApiError(
+        'Erro ao deletar filial',
+        500
+      )
     }
-  },
+
+    return c.json(result, 200);
+  }
 };

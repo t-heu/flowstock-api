@@ -1,38 +1,49 @@
-import { Request, Response, NextFunction } from "express";
+import type { Context } from 'hono';
 
-import { reportService } from "./report.service";
-import {ApiError} from "../../core/errors/ApiError"
+import { reportService } from './report.service';
+import { ApiError } from '../../core/errors/ApiError';
 
 export const reportController = {
-  async getReportDetailed(req: Request, res: Response, next: NextFunction) {
+  getReportDetailed: async (c: Context) => {
     try {
-      const {
-        branchId,
-        startDate,
-        endDate,
-        page,
-        pageSize,
-        type,
-      } = req.query as any;
-      const user = req.user;
+      const user = c.get('user');
+
+      const branchId = c.req.query('branchId');
+      const startDate = c.req.query('startDate');
+      const endDate = c.req.query('endDate');
+      const type = c.req.query('type');
+
+      const page = Number(c.req.query('page')) || 1;
+      const pageSize = Number(c.req.query('pageSize')) || 10;
 
       const result = await reportService.getDetailedReport({
         branchId,
         startDate,
         endDate,
-        page: Number(page) || 1,
-        pageSize: Number(pageSize) || 10,
+        page,
+        pageSize,
         type: type as any,
         user
       });
 
-      return res.status(result.success ? 200 : 400).json(result);
-    } catch (err: any) {
+      return c.json(
+        result,
+        result.success ? 200 : 400
+      );
+    } catch (err) {
       if (err instanceof ApiError) {
-        return next(err)
+        return c.json(
+          { success: false, message: err.message },
+          err.statusCode as 400 | 401 | 403 | 404 | 500
+        );
       }
 
-      return next(new Error("Error interno", err.message));
+      console.error(err);
+
+      return c.json(
+        { success: false, message: 'Erro interno' },
+        500
+      );
     }
-  },
+  }
 };

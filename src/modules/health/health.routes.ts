@@ -1,9 +1,9 @@
-import { Router } from "express";
+import { Hono } from 'hono';
 
-import { getHealth } from "./health.controller";
+import { getHealth } from './health.controller';
 
-const router = Router();
+const healthRoutes = new Hono();
 
-router.get("/", getHealth);
+healthRoutes.get('/', getHealth);
 
-export default router;
+export default healthRoutes;
